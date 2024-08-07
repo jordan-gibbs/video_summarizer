@@ -14,7 +14,7 @@ client = OpenAI()
 # Function to download YouTube video using pytubefix
 def download_video(url):
     try:
-        yt = YouTube(url, on_progress_callback=on_progress, client='ANDROID_MUSIC')
+        yt = YouTube(url, on_progress_callback=on_progress, client="ANDROID_CREATOR")
         stream = yt.streams.get_highest_resolution()
         if not stream:
             st.error("No video stream found.")
