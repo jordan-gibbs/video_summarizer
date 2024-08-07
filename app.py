@@ -8,8 +8,68 @@ import math
 from io import BytesIO
 import tempfile
 from pydub import AudioSegment
+import os
+import pickle
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import time
 
-client = OpenAI()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def youtube_login():
+    YOUTUBE_EMAIL = os.getenv('YOUTUBE_EMAIL')
+    YOUTUBE_PASSWORD = os.getenv('YOUTUBE_PASSWORD')
+
+    if not YOUTUBE_EMAIL or not YOUTUBE_PASSWORD:
+        raise ValueError("YOUTUBE_EMAIL and YOUTUBE_PASSWORD environment variables must be set")
+
+    # Setup Chrome options
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+
+    # Set up the Chrome WebDriver
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+
+    # Open YouTube
+    driver.get("https://www.youtube.com")
+
+    # Click on the sign-in button
+    sign_in_button = driver.find_element(By.XPATH, '//yt-formatted-string[text()="Sign in"]')
+    sign_in_button.click()
+
+    # Wait for the sign-in page to load
+    time.sleep(3)
+
+    # Enter the email address
+    email_input = driver.find_element(By.XPATH, '//input[@type="email"]')
+    email_input.send_keys(YOUTUBE_EMAIL)
+    email_input.send_keys(Keys.RETURN)
+
+    # Wait for the password input to load
+    time.sleep(3)
+
+    # Enter the password
+    password_input = driver.find_element(By.XPATH, '//input[@type="password"]')
+    password_input.send_keys(YOUTUBE_PASSWORD)
+    password_input.send_keys(Keys.RETURN)
+
+    # Wait for the login process to complete
+    time.sleep(5)
+
+    # Save cookies to a file
+    with open("cookies.pkl", "wb") as f:
+        pickle.dump(driver.get_cookies(), f)
+
+    # Close the browser
+    driver.quit()
+
+# Call the login function
+youtube_login()
 
 # Function to download YouTube video using pytubefix
 def download_video(url):
@@ -157,6 +217,3 @@ if st.session_state.url:
                     st.write("Video Description:")
                     st.write(description)
 
-                    # if st.button("Try Again with a New Video"):
-                    #     st.session_state.url = ""
-                    #     st.rerun()
